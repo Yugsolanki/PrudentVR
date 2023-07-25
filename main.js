@@ -24,6 +24,8 @@ class WoodTurningMachine {
     document.body.appendChild(this.renderer.domElement);
 
     this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
+    // this.orbit.enablePan = false;
+    this.orbit.enableRotate = false
     this.orbit.update();
 
     this.woodLayers = this.renderWood(20, 100, this.woodLayersCount)
