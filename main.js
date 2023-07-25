@@ -1,12 +1,14 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { DragControls } from 'three/addons/controls/DragControls.js';
 import Helpers from "./helper";
 
 class WoodTurningMachine {
   constructor() {
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color( 0x356339 );
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    this.camera.position.set(0, 0, 15);
+    this.camera.position.set(0, 0, 20);
     this.camera.lookAt(0, 0, 0);
 
     this.helpers = new Helpers();
@@ -14,7 +16,7 @@ class WoodTurningMachine {
     this.keyCodes = [37,38,39,40,87,83];
     this.chiselSpeed = 0.1
     this.woodLayersCount = 20;
-    this.woodLayersRadius = this.helpers.getLayersRadius();
+    this.woodLayersRadius = this.helpers.getLayersRadius(this.woodLayersCount, 5);
     this.layerColor = this.helpers.generateShadesOfBrown(this.woodLayersCount);
 
     this.renderer = new THREE.WebGLRenderer();
@@ -22,14 +24,21 @@ class WoodTurningMachine {
     document.body.appendChild(this.renderer.domElement);
 
     this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
-    this.camera.position.set(0, 0, 20);
     this.orbit.update();
 
-    this.woodLayers = this.renderWood()
-    this.invisibleCylinder = this.renderBoundingBox()
+    this.woodLayers = this.renderWood(20, 100, this.woodLayersCount)
+    // console.log(this.woodLayers)
+    this.invisibleCylinder = this.renderBoundingBox(this.woodLayersRadius[0], 20);
 
-    this.chiselMesh = this.renderChisel();
+    this.chiselMesh = this.renderChisel(1,5);
     this.scene.add(this.chiselMesh)
+    let obj = [this.chiselMesh]
+    const controls = new DragControls( obj, this.camera, this.renderer.domElement );
+    controls.addEventListener("drag", () => {
+      this.temp();
+    })
+
+
 
     //Start animation
     this.animate()
@@ -148,7 +157,10 @@ class WoodTurningMachine {
         if (distance < this.woodLayersRadius[i]) {
           const [start, end] = this.helpers.getSegments(this.woodLayers[i], this.chiselMesh);
           for (let j = start; j <= end; j++) {
-            this.scene.remove(this.woodLayers[i][j]);
+            let rad = this.woodLayers[i][j].geometry.parameters.radiusTop - distance;
+            // console.log(rad)
+            this.woodLayers[i][j].geometry = new THREE.CylinderGeometry(this.woodLayers[i][j].geometry.parameters.radiusTop - rad, this.woodLayers[i][j].geometry.parameters.radiusTop-rad, 20/100)
+            // this.scene.remove(this.woodLayers[i][j]);
           }
         }
       }

@@ -61,7 +61,7 @@ class Helpers {
     let topRight = new THREE.Vector3(topRightVertex[0],topRightVertex[1],topRightVertex[2]);
 
     let startSegmentIndex = 0, endSegmentIndex = 0;
-    const comparision = 0.1;
+    const comparision = 0.050;
 
     for (let [index, segment] of segments.entries()) {
       const distance = this.getDistanceBetweenTwoPoints(segment.position,topLeft);
@@ -140,7 +140,7 @@ class Helpers {
     }
     return shades;
   }
-  
+
 }
 
 export default Helpers;
