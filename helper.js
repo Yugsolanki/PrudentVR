@@ -3,10 +3,10 @@ import * as THREE from "three";
 class Helpers {
 
   /**
-   * Gives a array of radiuses that layers of the wood will have.
-   * @param {Number} woodLayersCount Number of layers of the wood
-   * @param {Number} startRadius Radius of the first/outer layer of the wood
-   * @returns Array of radiuses
+   * Get the radius of each wood layer
+   * @param {Number} woodLayersCount number of layers to wood
+   * @param {Number} startRadius radius of the first wood layer
+   * @returns array of radius of each wood layer
    */
   getLayersRadius(woodLayersCount = 15, startRadius = 5) {
     const woodLayersRadius = [startRadius];
@@ -17,12 +17,11 @@ class Helpers {
     return woodLayersRadius;
   }
 
-
   /**
-   * Gives if chisel and bounding box are intersecting
-   * @param {THREE.Mesh} chisel
-   * @param {THREE.Mesh} boundingBox
-   * @returns
+   * Get Collision and Depth of chisel and bounding box of wood layer
+   * @param {THREE.Mesh} chisel  chisel mesh
+   * @param {THREE.Mesh} boundingBox  bounding box of wood layer
+   * @returns  [collision, distance, depth] collision is a boolean, distance is the distance between the chisel and bounding box, depth is the depth of the chisel in the wood layer
    */
   getCollisionAndDepth(chisel, boundingBox) {
     const height = chisel.geometry.parameters.height;
@@ -49,10 +48,10 @@ class Helpers {
 
 
   /**
-   * Gets you the wood segments between the top left vertex and the top right vertex of the chisel which needs to be deleted
-   * @param {Array<THREE.Mesh>} segments
-   * @param {THREE.Mesh} chisel
-   * @returns starting segment and ending segment number which need to be deleted
+   * Get the segments of the wood layer that are in contact with the chisel
+   * @param {Array<THREE.Mesh>} segments array of wood layer segments
+   * @param {THREE.Mesh} chisel chisel mesh
+   * @returns [startSegmentIndex, endSegmentIndex] startSegmentIndex is the index of the first segment in contact with the chisel, endSegmentIndex is the index of the last segment in contact with the chisel
    */
   getSegments(segments, chisel) {
     const [topLeftVertex, topRightVertex, bottomLeftVertex, bottomRightVertex] = this.getCylinderEndVertices(chisel);
@@ -83,9 +82,9 @@ class Helpers {
   }
 
   /**
-   * Gives the end vertices of a cylinder
-   * @param {THREE.Mesh} cylinder 
-   * @returns Position of 4 visible vertices of the cylinder
+   * Get the vertices of the cylinder mesh 
+   * @param {THREE.Mesh} cylinder cylinder mesh
+   * @returns array of vertices of the cylinder mesh, each vertex is an array of x,y,z coordinates
    */
   getCylinderEndVertices = (cylinder) => {
     const position = cylinder.position.clone();
@@ -112,13 +111,13 @@ class Helpers {
 
   /**
    * Gets you the distance between two Three.Vector3 points
-   * @param {THREE.Vector3} point1 
-   * @param {THREE.Vector3} point2 
-   * @returns distance between two points
+   * @param {THREE.Vector3} point1  first point as a Three.Vector3
+   * @param {THREE.Vector3} point2  second point as a Three.Vector3
+   * @returns distance between two points as a Number 
    */
   getDistanceBetweenTwoPoints(point1, point2) {
     const dx = point1.x - point2.x;
-    // const dy = point1.y - point2.y;
+    const dy = point1.y - point2.y;
     const dz = point1.z - point2.z;
     
     const distance = Math.abs(dx * dx)  + Math.abs(dz * dz);
@@ -126,9 +125,9 @@ class Helpers {
   }
 
   /**
-   * Generates an array of hsl values with of shades of brown going from dark to light
-   * @param {Number} numShades 
-   * @returns array of hsl values
+   * Get the color of each wood layer
+   * @param {Number} numShades number of shades of brown
+   * @returns array of colors of each wood layer
    */
   generateShadesOfBrown(numShades) {
     const shades = [];
