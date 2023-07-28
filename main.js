@@ -46,9 +46,9 @@ class WoodTurningMachine {
     // })
 
 
-    this.renderer.domElement.addEventListener('mousedown', (e)=> {this.onMouseDown(e)})
-    this.renderer.domElement.addEventListener('mousemove', (e) => {this.onMouseMove(e)})
-    this.renderer.domElement.addEventListener('mouseup', (e) => {this.onMouseUp(e)});
+    this.renderer.domElement.addEventListener('pointerdown', (e)=> {this.onMouseDown(e)})
+    this.renderer.domElement.addEventListener('pointermove', (e) => {this.onMouseMove(e)})
+    this.renderer.domElement.addEventListener('pointerup', (e) => {this.onMouseUp(e)});
 
     //Start animation
     this.animate()
