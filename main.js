@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { DragControls } from 'three/addons/controls/DragControls.js';
 import Helpers from "./helper";
+import {Howl, Howler} from 'howler';
 
 class WoodTurningMachine {
   constructor() {
@@ -14,10 +15,19 @@ class WoodTurningMachine {
     this.helpers = new Helpers();
 
     this.keyCodes = [37,38,39,40,87,83];
-    this.dragSpeed = 0.05
+    this.initialDragSpeed = 0.030;
+    this.dragSpeed = this.initialDragSpeed;
     this.woodLayersCount = 20;
     this.woodLayersRadius = this.helpers.getLayersRadius(this.woodLayersCount, 5);
     this.layerColor = this.helpers.generateShadesOfBrown(this.woodLayersCount);
+    this.sound = new Howl({
+      src: ['/lathe.mp3'],
+      onfade: function() {
+        console.log('Finished!');
+        
+      }
+    });
+    Howler.volume(0.15);
 
     //Mouse control
     this.isDragging = false,
@@ -126,6 +136,11 @@ class WoodTurningMachine {
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     this.renderer.render(this.scene, this.camera);
+
+    this.woodLayers.forEach((layer) => {
+      layer.rotation.x += this.dragSpeed;
+    }
+    );
   }
 
   /**
@@ -136,8 +151,13 @@ class WoodTurningMachine {
       this.chiselMesh,
       this.invisibleCylinder
     );
+    if (distance < 6.0) {
+      this.sound.play();
+    } else {
+      this.sound.pause();
+    }
     if (bool) {
-      this.dragSpeed = 0.010;
+      this.dragSpeed = 0.0075;
       const [start, end] = this.helpers.getSegments(this.woodLayers, this.chiselMesh);
       for (let i = start; i <= end; i++) {
         let rad = this.woodLayers[i].geometry.parameters.radiusTop - (this.woodLayers[i].geometry.parameters.radiusTop - distance);
@@ -147,7 +167,7 @@ class WoodTurningMachine {
         // this.scene.remove(this.woodLayers[i][j]);
       }
     } else {
-      this.dragSpeed = 0.05;
+      this.dragSpeed = this.initialDragSpeed;
     }
   }
 
@@ -191,4 +211,6 @@ document.addEventListener("keydown", function (event) {
 });
 
 // Add event listeners to the renderer or container element
+
+
 
