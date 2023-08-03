@@ -1,8 +1,13 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { DragControls } from 'three/addons/controls/DragControls.js';
 import Helpers from "./helper";
 import {Howl, Howler} from 'howler';
+
+class Wood {
+  constructor() {
+
+  }
+}
 
 class WoodTurningMachine {
   constructor() {
@@ -14,20 +19,48 @@ class WoodTurningMachine {
 
     this.helpers = new Helpers();
 
+    this.button = document.createElement('button');
+    this.button.innerHTML = 'Sound On';
+    this.button.style.position = 'absolute';
+    this.button.style.top = '10px';
+    this.button.style.left = '10px';
+    this.button.style.zIndex = 1;
+    this.button.addEventListener('click', () => {
+      this.soundOn = !this.soundOn;
+      if(this.soundOn) {
+        this.button.innerHTML = 'Sound Off';
+      } else {
+        this.sound.stop();
+        this.button.innerHTML = 'Sound On';
+      }
+    });
+    document.body.appendChild(this.button);
+
+    //CONTANTS
     this.keyCodes = [37,38,39,40,87,83];
     this.initialDragSpeed = 0.030;
     this.dragSpeed = this.initialDragSpeed;
     this.woodLayersCount = 20;
+    this.woodWidth = 20;
+    this.woodHeight = 5;
     this.woodLayersRadius = this.helpers.getLayersRadius(this.woodLayersCount, 5);
     this.layerColor = this.helpers.generateShadesOfBrown(this.woodLayersCount);
+    this.soundOn = false;
     this.sound = new Howl({
       src: ['/lathe.mp3'],
+      loop: true,
       onfade: function() {
         console.log('Finished!');
         
       }
     });
-    Howler.volume(0.15);
+    Howler.volume(0.10);
+    this.previousChiselPosition = {
+      x: 0,
+      y: 0,
+      z: 0,
+    };
+    this.previousRadius = Array(100).fill(5);
 
     //Mouse control
     this.isDragging = false,
@@ -41,24 +74,19 @@ class WoodTurningMachine {
     document.body.appendChild(this.renderer.domElement);
 
     this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
-    // this.orbit.enablePan = false;
+    // this.orbit.enablePan = false; //enable it for panning
     this.orbit.enableRotate = false
     this.orbit.update();
 
-    this.woodLayers = this.renderWood(20, 100, this.woodLayersCount)
+    this.woodLayers = this.renderWood(this.woodWidth, 100, this.woodHeight)
     this.invisibleCylinder = this.renderBoundingBox(this.woodLayersRadius[0], 20);
 
     this.chiselMesh = this.renderChisel(1,5);
     this.scene.add(this.chiselMesh)
-    // const controls = new DragControls( obj, this.camera, this.renderer.domElement );
-    // controls.addEventListener("drag", () => {
-    //   this.temp();
-    // })
-
 
     this.renderer.domElement.addEventListener('pointerdown', (e)=> {this.onMouseDown(e)})
     this.renderer.domElement.addEventListener('pointermove', (e) => {this.onMouseMove(e)})
-    this.renderer.domElement.addEventListener('pointerup', (e) => {this.onMouseUp(e)});
+    this.renderer.domElement.addEventListener('pointerup', () => {this.onMouseUp()});
 
     //Start animation
     this.animate()
@@ -71,20 +99,17 @@ class WoodTurningMachine {
    * @param {*} segmentCount  number of segments in the wood
    * @returns array of wood segments mesh, each segment is a cylinder mesh
    */
-  renderWood(height = 20, segmentCount = 100) {
+  renderWood(height = 20, segmentCount = 100, radius = 5) {
     const widthOfEachSegment = height / segmentCount;
     const woodLayers = [];
-
     let x = -height / 2;
     for (let j = 0; j < segmentCount; j++) {
       let geometry = new THREE.CylinderGeometry(
-        this.woodLayersRadius[0],
-        this.woodLayersRadius[0],
+        radius,
+        radius,
         widthOfEachSegment
       );
-
       let color = this.layerColor[0];
-    
       let material = new THREE.MeshBasicMaterial({color: color,wireframe: false});
       let cylinder = new THREE.Mesh(geometry, material);
       cylinder.position.set(x, 0, 0);
@@ -93,7 +118,6 @@ class WoodTurningMachine {
       x += widthOfEachSegment;
       woodLayers.push(cylinder);
     }
-
     return woodLayers;
   }
 
@@ -136,11 +160,6 @@ class WoodTurningMachine {
   animate() {
     requestAnimationFrame(this.animate.bind(this));
     this.renderer.render(this.scene, this.camera);
-
-    this.woodLayers.forEach((layer) => {
-      layer.rotation.x += this.dragSpeed;
-    }
-    );
   }
 
   /**
@@ -151,40 +170,71 @@ class WoodTurningMachine {
       this.chiselMesh,
       this.invisibleCylinder
     );
+    
     if (distance < 6.0) {
-      this.sound.play();
+      if (this.soundOn) 
+        this.sound.play();
     } else {
       this.sound.pause();
     }
+    
     if (bool) {
       this.dragSpeed = 0.0075;
       const [start, end] = this.helpers.getSegments(this.woodLayers, this.chiselMesh);
       for (let i = start; i <= end; i++) {
-        let rad = this.woodLayers[i].geometry.parameters.radiusTop - (this.woodLayers[i].geometry.parameters.radiusTop - distance);
+        let rad = this.woodLayers[i].geometry.parameters.radiusTop - (this.woodLayers[i].geometry.parameters.radiusTop - (distance));
+        if (rad < 0) rad = 0;
+
+        if (rad > this.previousRadius[i]) rad = this.previousRadius[i];
+        this.previousRadius[i] = rad;
         this.woodLayers[i].geometry = new THREE.CylinderGeometry(rad, rad, 20/100)
         let color = new THREE.Color(this.layerColor[5]);
         this.woodLayers[i].material.color = color;
         // this.scene.remove(this.woodLayers[i][j]);
+
       }
     } else {
       this.dragSpeed = this.initialDragSpeed;
     }
+    this.previousChiselPosition.x = this.chiselMesh.position.x;
   }
 
-  onMouseUp(e) {
+  /**
+   * Function to handle mouse down event, it will set the isDragging flag to false
+  */
+  onMouseUp() {
     this.isDragging = false;
   }
 
+  /**
+   * Function to handle mouse down event, it will set the isDragging flag to true and store the previous mouse position, so that we can calculate the delta between the current mouse position and the previous mouse position, and move the chisel accordingly 
+   * @param {PointerEvent} event 
+   */
   onMouseMove(event) {
     if (this.isDragging) {
+      // Calculate the delta between the current mouse position and the previous mouse position 
       const delta = {
         x: event.clientX - this.previousMousePosition.x,
         y: event.clientY - this.previousMousePosition.y,
       };
 
+      // Move the chisel mesh according to the mouse movement 
       this.chiselMesh.position.x += delta.x * this.dragSpeed;
       this.chiselMesh.position.y -= delta.y * this.dragSpeed;
-  
+
+      // Limit the chisel movement, so that it does not go out of the wood mesh 
+      if (this.chiselMesh.position.x > this.woodWidth/2 + 10) {
+        this.chiselMesh.position.x = this.woodWidth/2 + 10
+      } else if (this.chiselMesh.position.x < -this.woodWidth/2 - 10) {
+        this.chiselMesh.position.x = -this.woodWidth/2 - 10
+      }
+
+      // Limit the chisel movement, so that it does not go beyond the wood center 
+      if (this.chiselMesh.position.y > -2.5) {
+        this.chiselMesh.position.y = -2.5
+      }
+
+      // it will update the previous mouse position to the current mouse position
       this.previousMousePosition = {
         x: event.clientX,
         y: event.clientY,
@@ -193,6 +243,10 @@ class WoodTurningMachine {
     }
   }
 
+  /**
+   * Function to handle mouse down event, it will set the isDragging flag to true and store the current mouse position to the previous mouse position
+   * @param {PointerEvent} event
+  */
   onMouseDown(event) {
     this.isDragging = true;
     this.previousMousePosition = {
@@ -201,16 +255,10 @@ class WoodTurningMachine {
     };
   }
 
+  mute() {
+    this.soundOn = !this.soundOn;
+  }
+
 }
 
 const WoodTurning = new WoodTurningMachine();
-
-//Add eventlister to move the tool
-document.addEventListener("keydown", function (event) {
-  WoodTurning.chiselMovement(event.keyCode);
-});
-
-// Add event listeners to the renderer or container element
-
-
-

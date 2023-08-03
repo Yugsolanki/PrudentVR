@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "A Vite + Three.js + Howler.js project",
+  "author": "Yug Solanki",
   "scripts": {
     "dev": "vite",
     "host": "vite --host",
@@ -14,7 +16,6 @@
   },
   "dependencies": {
     "howler": "^2.2.3",
-    "three": "^0.154.0",
-    "three-nebula": "^10.0.3"
+    "three": "^0.154.0"
   }
 }
