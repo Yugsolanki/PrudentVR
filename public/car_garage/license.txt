@@ -1,0 +1,11 @@
+Model Information:
+* title:	car garage
+* source:	https://sketchfab.com/3d-models/car-garage-8993d2084de440eead0a1fe43f3cfa0f
+* author:	ateeq93 (https://sketchfab.com/ateeq93)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "car garage" (https://sketchfab.com/3d-models/car-garage-8993d2084de440eead0a1fe43f3cfa0f) by ateeq93 (https://sketchfab.com/ateeq93) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

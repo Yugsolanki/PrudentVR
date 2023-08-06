@@ -1,0 +1,11 @@
+Model Information:
+* title:	Workshop table industrial
+* source:	https://sketchfab.com/3d-models/workshop-table-industrial-18b392ae42994abaa76dbbd7804c3514
+* author:	KOMODOZ (https://sketchfab.com/komodoz)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Workshop table industrial" (https://sketchfab.com/3d-models/workshop-table-industrial-18b392ae42994abaa76dbbd7804c3514) by KOMODOZ (https://sketchfab.com/komodoz) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

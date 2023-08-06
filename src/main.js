@@ -3,64 +3,40 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import Helpers from "./helper";
 import {Howl, Howler} from 'howler';
 
-class Wood {
-  constructor() {
-
-  }
-}
-
 class WoodTurningMachine {
   constructor() {
+    //Initialize scene, camera, renderer
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color( 0x356339 );
     this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     this.camera.position.set(0, 0, 20);
     this.camera.lookAt(0, 0, 0);
 
+    //Helpers class
     this.helpers = new Helpers();
 
-    this.button = document.createElement('button');
-    this.button.innerHTML = 'Sound On';
-    this.button.style.position = 'absolute';
-    this.button.style.top = '10px';
-    this.button.style.left = '10px';
-    this.button.style.zIndex = 1;
-    this.button.addEventListener('click', () => {
-      this.soundOn = !this.soundOn;
-      if(this.soundOn) {
-        this.button.innerHTML = 'Sound Off';
-      } else {
-        this.sound.stop();
-        this.button.innerHTML = 'Sound On';
-      }
-    });
-    document.body.appendChild(this.button);
-
     //CONTANTS
-    this.keyCodes = [37,38,39,40,87,83];
+    //Drag speed constants
     this.initialDragSpeed = 0.030;
     this.dragSpeed = this.initialDragSpeed;
+
+    //Wood constants
     this.woodLayersCount = 20;
-    this.woodWidth = 20;
-    this.woodHeight = 5;
-    this.woodLayersRadius = this.helpers.getLayersRadius(this.woodLayersCount, 5);
+    this.woodHeight = 20;
+    this.woodRadius = 5;
     this.layerColor = this.helpers.generateShadesOfBrown(this.woodLayersCount);
-    this.soundOn = false;
+
+    //Sound
+    this.soundOn = true;
     this.sound = new Howl({
-      src: ['/lathe.mp3'],
+      src: ['./lathe.mp3'],
       loop: true,
-      onfade: function() {
-        console.log('Finished!');
-        
-      }
+      volume: 0.5,
     });
-    Howler.volume(0.10);
-    this.previousChiselPosition = {
-      x: 0,
-      y: 0,
-      z: 0,
-    };
-    this.previousRadius = Array(100).fill(5);
+
+    //Chisel constants
+    this.previousChiselPosition = {x: 0,y: 0,z: 0}; //previous chisel position
+    this.previousRadius = Array(100).fill(5); //initial radius of each wood layer is 5
 
     //Mouse control
     this.isDragging = false,
@@ -69,21 +45,26 @@ class WoodTurningMachine {
       y: 0
     }
 
+
+
+    //Render wood, bounding box and chisel
+    this.woodLayers = this.renderWood(this.woodHeight, 100, this.woodRadius)
+    this.invisibleCylinder = this.renderBoundingBox(this.woodRadius, this.woodHeight);
+    this.chiselMesh = this.renderChisel(1,5);
+
+
+    //Initialize renderer
     this.renderer = new THREE.WebGLRenderer();
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
+    //Initialize orbit controls
     this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
     // this.orbit.enablePan = false; //enable it for panning
     this.orbit.enableRotate = false
     this.orbit.update();
 
-    this.woodLayers = this.renderWood(this.woodWidth, 100, this.woodHeight)
-    this.invisibleCylinder = this.renderBoundingBox(this.woodLayersRadius[0], 20);
-
-    this.chiselMesh = this.renderChisel(1,5);
-    this.scene.add(this.chiselMesh)
-
+    //Add event listeners
     this.renderer.domElement.addEventListener('pointerdown', (e)=> {this.onMouseDown(e)})
     this.renderer.domElement.addEventListener('pointermove', (e) => {this.onMouseMove(e)})
     this.renderer.domElement.addEventListener('pointerup', () => {this.onMouseUp()});
@@ -151,6 +132,7 @@ class WoodTurningMachine {
     });
     const chiselMesh = new THREE.Mesh(chiselGeometry, chiselMaterial);
     chiselMesh.position.set(0, -10, 0);
+    this.scene.add(chiselMesh);
     return chiselMesh;
   }
 
@@ -163,41 +145,32 @@ class WoodTurningMachine {
   }
 
   /**
-   * Temporary function, it will change the color of the wood layer in contact with the chisel
+   * It will check if the chisel is in contact with the wood, if yes then it will update the wood layers and sound accordingly,
+   * else it will update the chisel position radius and drag speed, also it will update the previous chisel position and radius array accordingly 
    */
-  temp() {
-    const [bool, distance, depth] = this.helpers.getCollisionAndDepth(
+  updateWoodAndSound() {
+    const [collision, distance, depth] = this.helpers.getCollisionAndDepth(
       this.chiselMesh,
       this.invisibleCylinder
     );
-    
-    if (distance < 6.0) {
-      if (this.soundOn) 
-        this.sound.play();
-    } else {
-      this.sound.pause();
-    }
-    
-    if (bool) {
-      this.dragSpeed = 0.0075;
+  
+    // If collision is true, then play the sound, else pause the sound
+    this.soundOn ? (distance < 6.0 ? this.sound.play() : this.sound.pause()) : this.sound.pause();
+  
+    //If collision is true, then change the color of the wood layer in contact with the chisel, also change the radius of the wood layer
+    if (collision) {
+      this.dragSpeed = 0.0075; //reduce the drag speed
       const [start, end] = this.helpers.getSegments(this.woodLayers, this.chiselMesh);
       for (let i = start; i <= end; i++) {
-        let rad = this.woodLayers[i].geometry.parameters.radiusTop - (this.woodLayers[i].geometry.parameters.radiusTop - (distance));
-        if (rad < 0) rad = 0;
-
-        if (rad > this.previousRadius[i]) rad = this.previousRadius[i];
-        this.previousRadius[i] = rad;
-        this.woodLayers[i].geometry = new THREE.CylinderGeometry(rad, rad, 20/100)
-        let color = new THREE.Color(this.layerColor[5]);
-        this.woodLayers[i].material.color = color;
-        // this.scene.remove(this.woodLayers[i][j]);
-
+        let rad = this.woodLayers[i].geometry.parameters.radiusTop - (this.woodLayers[i].geometry.parameters.radiusTop - distance);
+        this.woodLayers[i].geometry = new THREE.CylinderGeometry(Math.max(rad, 0), Math.max(rad, 0), 20/100);
+        this.woodLayers[i].material.color = new THREE.Color(this.layerColor[5]);
       }
     } else {
       this.dragSpeed = this.initialDragSpeed;
     }
     this.previousChiselPosition.x = this.chiselMesh.position.x;
-  }
+  }  
 
   /**
    * Function to handle mouse down event, it will set the isDragging flag to false
@@ -223,23 +196,21 @@ class WoodTurningMachine {
       this.chiselMesh.position.y -= delta.y * this.dragSpeed;
 
       // Limit the chisel movement, so that it does not go out of the wood mesh 
-      if (this.chiselMesh.position.x > this.woodWidth/2 + 10) {
-        this.chiselMesh.position.x = this.woodWidth/2 + 10
-      } else if (this.chiselMesh.position.x < -this.woodWidth/2 - 10) {
+      if (this.chiselMesh.position.x > this.woodWidth/2 + 10) 
+        this.chiselMesh.position.x = this.woodWidth/2 + 10 //
+      else if (this.chiselMesh.position.x < -this.woodWidth/2 - 10) 
         this.chiselMesh.position.x = -this.woodWidth/2 - 10
-      }
 
       // Limit the chisel movement, so that it does not go beyond the wood center 
-      if (this.chiselMesh.position.y > -2.5) {
+      if (this.chiselMesh.position.y > -2.5) 
         this.chiselMesh.position.y = -2.5
-      }
 
       // it will update the previous mouse position to the current mouse position
       this.previousMousePosition = {
         x: event.clientX,
         y: event.clientY,
       };
-      this.temp(); // Call your function during dragging here
+      this.updateWoodAndSound(); // Call your function during dragging here
     }
   }
 
@@ -249,14 +220,7 @@ class WoodTurningMachine {
   */
   onMouseDown(event) {
     this.isDragging = true;
-    this.previousMousePosition = {
-      x: event.clientX,
-      y: event.clientY,
-    };
-  }
-
-  mute() {
-    this.soundOn = !this.soundOn;
+    this.previousMousePosition = {x: event.clientX,y: event.clientY,};
   }
 
 }
