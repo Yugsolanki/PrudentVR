@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import Helpers from "./helper";
 import {Howl, Howler} from 'howler';
+import Helpers from "./helpers";
 
 class WoodTurningMachine {
   constructor() {
@@ -46,7 +46,6 @@ class WoodTurningMachine {
     }
 
 
-
     //Render wood, bounding box and chisel
     this.woodLayers = this.renderWood(this.woodHeight, 100, this.woodRadius)
     this.invisibleCylinder = this.renderBoundingBox(this.woodRadius, this.woodHeight);
@@ -88,7 +87,8 @@ class WoodTurningMachine {
       let geometry = new THREE.CylinderGeometry(
         radius,
         radius,
-        widthOfEachSegment
+        widthOfEachSegment,
+        32
       );
       let color = this.layerColor[0];
       let material = new THREE.MeshBasicMaterial({color: color,wireframe: false});
