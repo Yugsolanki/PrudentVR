@@ -12,23 +12,21 @@ class Scene {
     this.camera.inputs.addMouseWheel();
     this.camera.setTarget(BABYLON.Vector3.Zero());
 
-    this.woodDiameter = 2;
-    this.woodHeight = 10;
-    this.woodSegments = 100;
-    this.heightOfEachSegment = this.woodHeight / this.woodSegments;
-
-    this.boxes = [];
-    this.chisel = null;
-    this.point = null;
     this.createScene();
 
     this.render();
     this.resize();
     this.moveChisel();
-    this.getPoint();
+    this.getEndVerticesOfChisel();
   }
 
   createScene() {
+    this.boxes = [];
+    this.woodDiameter = 2;
+    this.woodHeight = 10;
+    this.woodSegments = 100;
+    this.heightOfEachSegment = this.woodHeight / this.woodSegments;
+
     //create the wood segment
     let x = 0 - (this.woodHeight / 2);
     for (let i = 0; i < this.woodSegments; i++) {
@@ -43,10 +41,16 @@ class Scene {
       this.boxes.push(box);
     }
 
+    //create a bounding box around the wood
+    this.woodBoundingBox = BABYLON.MeshBuilder.CreateBox('woodBoundingBox', {width: 2, height: 10, depth: 2}, this.scene);
+    this.woodBoundingBox.position = new BABYLON.Vector3(0, 0, 0);
+    this.woodBoundingBox.visibility = 0;
+    this.woodBoundingBox.rotate(BABYLON.Axis.Z, Math.PI / 2);
+
     //create the chisel
     this.chisel = BABYLON.MeshBuilder.CreateCylinder('chisel', {diameter: 0.5, height: 2, updatable: true}, this.scene);
     this.chisel.rotate(BABYLON.Axis.X, Math.PI);
-    this.chisel.position = new BABYLON.Vector3(0, -2, -3);
+    this.chisel.position = new BABYLON.Vector3(0, -3, 0);
   }
 
   render() {
@@ -88,23 +92,53 @@ class Scene {
 
     //get x, y, z of wood
     const woodX = this.boxes[49].position.x;
-    const woodY = this.boxes[49].position.y - (this.woodDiameter / 2);
+    const woodY = this.boxes[49].position.y;
     const woodZ = this.boxes[49].position.z;
 
+    //get difference between chisel and wood
     const dx = chiselX - woodX;
     const dy = chiselY - woodY;
     const dz = chiselZ - woodZ;
 
     //get distance between chisel and wood
-    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) - this.woodDiameter;
     console.log(distance);
     return distance;
   }
 
-  getPoint() {
-    //put a point at the top of the chisel
-    this.point = BABYLON.MeshBuilder.CreateSphere('point', {diameter: 0.1}, this.scene);
-    this.point.position = new BABYLON.Vector3(0, -1, -3); //y = height of chisel / 2, z = z of chisel
+  getEndVerticesOfChisel() {
+    const chiselX = this.chisel.position.x;
+    const chiselY = this.chisel.position.y;
+    const chiselZ = this.chisel.position.z;
+
+    //get chisel top left and top right
+    const chiselTopLeftX = chiselX - 0.25;
+    const chiselTopLeftY = chiselY + 1;
+    const chiselTopLeftZ = chiselZ + 0.25;
+    const chiselTopRightX = chiselX + 0.25;
+    const chiselTopRightY = chiselY + 1;
+    const chiselTopRightZ = chiselZ + 0.25;
+    
+    const topLeft = new BABYLON.Vector3(chiselTopLeftX, chiselTopLeftY, chiselTopLeftZ);
+    const topRight = new BABYLON.Vector3(chiselTopRightX, chiselTopRightY, chiselTopRightZ);
+
+    return {topLeft, topRight};
+  }
+
+  updateWood() {
+    const distance = this.getDistanceBetweenWoodAndChisel();
+    if (distance < 0.5) {
+      this.boxes[49].dispose();
+      this.boxes.splice(49, 1);
+    }
+  }
+
+  plotPoint(position) {
+    //draw a point
+    const point = BABYLON.MeshBuilder.CreateSphere('point', {diameter: 0.1}, this.scene);
+    point.position = position;
+    point.material = new BABYLON.StandardMaterial('pointMaterial', this.scene);
+    point.material.diffuseColor = new BABYLON.Color3(1, 0, 0);
   }
 }
 
