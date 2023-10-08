@@ -67,7 +67,7 @@ class Scene {
 
   moveChisel() {
     window.addEventListener('keydown', (e) => {
-      this.getDistanceBetweenWoodAndChisel();
+      this.updateWood();
       if (e.key === 'w') {
         this.chisel.position.z += 0.1;
       } else if (e.key === 's') {
@@ -91,9 +91,9 @@ class Scene {
     const chiselZ = this.chisel.position.z;
 
     //get x, y, z of wood
-    const woodX = this.boxes[49].position.x;
-    const woodY = this.boxes[49].position.y;
-    const woodZ = this.boxes[49].position.z;
+    const woodX = this.woodBoundingBox.position.x;
+    const woodY = this.woodBoundingBox.position.y;
+    const woodZ = this.woodBoundingBox.position.z;
 
     //get difference between chisel and wood
     const dx = chiselX - woodX;
@@ -102,7 +102,6 @@ class Scene {
 
     //get distance between chisel and wood
     const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) - this.woodDiameter;
-    console.log(distance);
     return distance;
   }
 
@@ -125,11 +124,52 @@ class Scene {
     return {topLeft, topRight};
   }
 
+  getDistanceBetweenTwoPoints(point1, point2) {
+    const dx = point1.x - point2.x;
+    const dy = point1.y - point2.y;
+    const dz = point1.z - point2.z;
+
+    const distance =  Math.sqrt(dx * dx  + dz * dz) - this.woodDiameter / 10;
+    return distance;
+  }
+
+  getCollidingWoodSegments() {
+    const {topLeft, topRight} = this.getEndVerticesOfChisel();
+    
+    let start = null;
+    let end = null;
+    const comparison = 0.08;
+
+    for (let i = 0; i < this.boxes.length; i++) {
+      const boxPosition = this.boxes[i].position;
+      const distance = this.getDistanceBetweenTwoPoints(topLeft, boxPosition);
+      if (distance < comparison) {
+        start = i;
+        break;
+      }
+    }
+
+    for (let i = this.boxes.length - 1; i >= 0; i--) {
+      const boxPosition = this.boxes[i].position;
+      const distance = this.getDistanceBetweenTwoPoints(topRight, boxPosition);
+      if (distance < comparison) {
+        end = i;
+        break;
+      }
+    }
+
+    return [start, end];
+  }
+
   updateWood() {
     const distance = this.getDistanceBetweenWoodAndChisel();
-    if (distance < 0.5) {
-      this.boxes[49].dispose();
-      this.boxes.splice(49, 1);
+    if (distance < 0.1) {
+      const [start, end] = this.getCollidingWoodSegments();
+      if (start !== null && end !== null) {
+        for (let i = start; i <= end; i++) {
+          this.boxes[i].dispose();
+        }
+      }
     }
   }
 
