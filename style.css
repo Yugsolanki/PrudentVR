@@ -16,3 +16,16 @@ canvas {
   outline: none;
   border: none;
 }
+
+.vr-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0.5em;
+  padding: 0.5rem;
+}
+
+.hide {
+  display: none;
+  visibility: hidden;
+}

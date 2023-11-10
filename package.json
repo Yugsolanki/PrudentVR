@@ -15,8 +15,9 @@
     "vite": "^4.4.0"
   },
   "dependencies": {
+    "aframe": "^1.4.2",
     "dat.gui": "^0.7.9",
     "howler": "^2.2.3",
-    "three": "^0.154.0"
+    "three": "^0.158.0"
   }
 }

@@ -2,15 +2,17 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {Howl, Howler} from 'howler';
 import Helpers from "./helpers";
+import {camera, scene, renderer} from "./models";
 
 class WoodTurningMachine {
   constructor() {
     //Initialize scene, camera, renderer
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color( 0x356339 );
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    this.camera.position.set(0, 0, 20);
-    this.camera.lookAt(0, 0, 0);
+    this.scene = scene;
+    // this.scene.background = new THREE.Color( 0x356339 );
+    // this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    this.camera = camera;
+    // this.camera.position.set(0, 0, 20);
+    // this.camera.lookAt(0, 0, 0);
 
     //Helpers class
     this.helpers = new Helpers();
@@ -53,15 +55,16 @@ class WoodTurningMachine {
 
 
     //Initialize renderer
-    this.renderer = new THREE.WebGLRenderer();
+    // this.renderer = new THREE.WebGLRenderer();
+    this.renderer = renderer;
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
 
     //Initialize orbit controls
-    this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
-    // this.orbit.enablePan = false; //enable it for panning
-    this.orbit.enableRotate = false
-    this.orbit.update();
+    // this.orbit = new OrbitControls(this.camera, this.renderer.domElement);
+    // // this.orbit.enablePan = false; //enable it for panning
+    // this.orbit.enableRotate = false
+    // this.orbit.update();
 
     //Add event listeners
     this.renderer.domElement.addEventListener('pointerdown', (e)=> {this.onMouseDown(e)})
